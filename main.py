@@ -31,14 +31,17 @@ def download_audio():
 
 root = tk.Tk()
 root.title('Download audio do Youtube')
+root.geometry("400x200")
+root.resizable(False, False)
+root.config(bg="#F0F0F0")
 
 label_url = tk.Label(root, text='URL DO VIDEO AQUI')
 label_url.pack()
 
-entry_url = tk.Entry(root, width=50)
+entry_url = tk.Entry(root, width=60, font=("Arial, 12"))
 entry_url.pack()
 
-button_download = tk.Button(root, text='Baixar video', command=download_audio)
-button_download.pack()
+button_download = tk.Button(root, text='Baixar video', command=download_audio, font=("Arial, 12"), width=15)
+button_download.pack(pady=10)
 
 root.mainloop()
