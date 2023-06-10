@@ -5,28 +5,39 @@ import tkinter as tk
 from tkinter import messagebox, filedialog
 
 
+def baixar_audio_yt(url, pasta_destino):
+    try:
+        youtube = pytube.YouTube(url)
+        audio = youtube.streams.filter(only_audio=True).first()
+        destino = audio.download(output_path=pasta_destino)
+        nome_mp3 = f"{youtube.title}.mp3"
+        artist = youtube.author
+        nome_destino = os.path.join(pasta_destino, nome_mp3)
+        os.rename(destino, nome_destino)
+        messagebox.showinfo('Sucesso', f"Você baixou uma musica de {artist}")
+        return nome_destino
+    except pytube.exceptions.ExtractError:
+        messagebox.showerror("Erro", "Erro ao extraír audio do vídeo.")
+    except Exception as e:
+        messagebox.showerror("Error", f"Ocorreu um erro ao baixar o áudio: {str(e)}")
+
+
 def download_audio():
     url = entry_url.get().strip()
     if not url:
         messagebox.showwarning("Aviso", "Por favor, insira uma URL")
         return
-
     pasta_destino = filedialog.askdirectory(title='Selecione a pasta de destino')
     if pasta_destino:
-        try:
-            youtube = pytube.YouTube(url)
-            audio = youtube.streams.filter(only_audio=True).first()
-            destino = audio.download(output_path=pasta_destino)
-            nome_mp3 = f"{youtube.title}.mp3"
-            artist = youtube.author
-            nome_destino = os.path.join(pasta_destino, nome_mp3)
-            os.rename(destino, nome_destino)
-            messagebox.showinfo('Sucesso', f"Você baixou uma musica de {artist}")
-            return nome_destino
-        except pytube.exceptions.ExtractError:
-            messagebox.showerror("Erro", "Erro ao extraír audio do vídeo.")
-        except Exception as e:
-            messagebox.showerror("Error", f"Ocorreu um erro ao baixar o áudio: {str(e)}")
+        audio_file = baixar_audio_yt(url, pasta_destino)
+        if audio_file:
+            messagebox.showinfo("Concluído", f"Download concluído")
+
+
+def open_folder():
+    pasta_destino = filedialog.askdirectory(title="Selecione a pasta de destino. ")
+    if pasta_destino:
+        os.startfile(pasta_destino)
 
 
 root = tk.Tk()
@@ -43,5 +54,8 @@ entry_url.pack()
 
 button_download = tk.Button(root, text='Baixar video', command=download_audio, font=("Arial, 12"), width=15)
 button_download.pack(pady=10)
+
+button_open_folder = tk.Button(root, text="Abrir Pasta", command=open_folder, font=("Arial, 12"), width=15)
+button_open_folder.pack(pady=10)
 
 root.mainloop()
