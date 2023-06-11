@@ -10,7 +10,7 @@ API_KEY = 'AIzaSyCWJT2WyA1MqdaaXv6kFVo_doBhbpDur8U'
 # Criar a tabela - OK
 # Inserir dados na tabela - OK
 # Obter resposta da tabela - OK
-# Search Integrado com a API do Youtube
+# Search Integrado com a API do Youtube - OK
 # Historico Embutido no programa com output
 historico = []
 
@@ -54,17 +54,35 @@ def baixar_audio_yt(url, pasta_destino):
     except Exception as e:
         messagebox.showerror("Error", f"Ocorreu um erro ao baixar o áudio: {str(e)}")
 
+def search_yt(query):
+    youtube = build('youtube', 'v3', developerKey=API_KEY)
+    request = youtube.search().list(
+        part='id',
+        type='video',
+        maxResults=5,
+        q=query
+    )
+    response = request.execute()
+    videos = [item['id']['videoId'] for item in response['items']]
+    return videos
 
 def download_audio():
-    url = entry_url.get().strip()
-    if not url:
-        messagebox.showwarning("Aviso", "Por favor, insira uma URL")
+    query = entry_url.get().strip()
+    if not query:
+        messagebox.showwarning("Aviso", "Por favor, insira uma consulta para buscar.")
         return
+    videos = search_yt(query)
+    if not videos:
+        messagebox.showwarning("Aviso", "Nenhum video encontrado.")
+        return
+    select_video = videos[0]
+    url = f'https://www.youtube.com/watch?v={select_video}'
     pasta_destino = filedialog.askdirectory(title='Selecione a pasta de destino')
     if pasta_destino:
         audio_file = baixar_audio_yt(url, pasta_destino)
         if audio_file:
             messagebox.showinfo("Concluído", f"Download concluído")
+            exibir_historico()
 
 
 
@@ -73,8 +91,12 @@ def open_folder():
     if pasta_destino:
         os.startfile(pasta_destino)
 
+
 def exibir_historico():
     messagebox.showinfo("Histórico de Downloads", "\n".join(historico))
+
+
+
 root = tk.Tk()
 root.title('Download audio do Youtube')
 root.geometry("400x200")
