@@ -1,9 +1,11 @@
+from turtle import back
 from googleapiclient.discovery import build
 import pytube
 from pytube import exceptions
 import os
 import sqlite3
 import tkinter as tk
+from tkinter import ttk
 from tkinter import messagebox, filedialog
 
 API_KEY = 'AIzaSyCWJT2WyA1MqdaaXv6kFVo_doBhbpDur8U'
@@ -12,7 +14,6 @@ API_KEY = 'AIzaSyCWJT2WyA1MqdaaXv6kFVo_doBhbpDur8U'
 # Obter resposta da tabela - OK
 # Search Integrado com a API do Youtube - OK
 # Historico Embutido no programa com output
-historico = []
 
 def create_table():
     connection = sqlite3.connect('historico.db')
@@ -41,12 +42,14 @@ def baixar_audio_yt(url, pasta_destino):
         youtube = pytube.YouTube(url)
         audio = youtube.streams.filter(only_audio=True).first()
         destino = audio.download(output_path=pasta_destino)
-        nome_mp3 = f"{youtube.title}.mp3"
+        nome_musica = youtube.title
         artist = youtube.author
+        titulo = f"{nome_musica} - {artist}"
+        nome_mp3 = f"{titulo}.mp3"
         nome_destino = os.path.join(pasta_destino, nome_mp3)
-        historico.append(nome_mp3)
+        insert_data(url, titulo)
         os.rename(destino, nome_destino)
-        messagebox.showinfo('Sucesso', f"Você baixou uma musica de {artist}")
+        messagebox.showinfo('Download Concluído!', f"Você baixou uma musica de {artist}")
 
         return nome_destino
     except pytube.exceptions.ExtractError:
@@ -81,9 +84,7 @@ def download_audio():
     if pasta_destino:
         audio_file = baixar_audio_yt(url, pasta_destino)
         if audio_file:
-            messagebox.showinfo("Concluído", f"Download concluído")
             exibir_historico()
-
 
 
 def open_folder():
@@ -93,29 +94,45 @@ def open_folder():
 
 
 def exibir_historico():
-    messagebox.showinfo("Histórico de Downloads", "\n".join(historico))
+    registros = get_data()
+    if registros: 
+        historico = "\n\n".join([f'Título: {registro[2]}' for registro in registros])
+        output_area.delete('1.0', tk.END)
+        output_area.insert(tk.END, historico)
+    else:
+        output_area.delete('1.0', tk.END)
+        output_area.insert(tk.END, "Nenhum download realizado!")
 
+create_table()
 
 
 root = tk.Tk()
 root.title('Download audio do Youtube')
-root.geometry("400x200")
+root.geometry("400x400")
 root.resizable(False, False)
 root.config(bg="#F0F0F0")
 
-label_url = tk.Label(root, text='URL DO VIDEO AQUI')
+style = ttk.Style()
+style.configure("TLabel", background='#F0F0F0')
+style.configure("TButton", background='#D0D0D0', font=("Arial, 12"), width=15)
+style.configure("TEntry", font=("Arial, 12"))
+
+
+label_url = ttk.Label(root, text='URL DO VIDEO AQUI')
 label_url.pack()
 
-entry_url = tk.Entry(root, width=60, font=("Arial, 12"))
+entry_url = ttk.Entry(root, width=60, font=("Arial, 12"))
 entry_url.pack()
 
-button_download = tk.Button(root, text='Baixar video', command=download_audio, font=("Arial, 12"), width=15)
+button_download = ttk.Button(root, text='Baixar video', command=download_audio)
 button_download.pack(pady=10)
 
-button_open_folder = tk.Button(root, text="Abrir Pasta", command=open_folder, font=("Arial, 12"), width=15)
+button_open_folder = ttk.Button(root, text="Abrir Pasta", command=open_folder)
 button_open_folder.pack(pady=10)
 
-button_historico = tk.Button(root, text="Exibir Histórico", command=exibir_historico, font=("Arial, 12"), width=15)
-button_historico.pack(pady=10)
+output_area =  tk.Text(root, width=50, height=10)
+output_area.pack(pady=10)
 
+button_historico = ttk.Button(root, text="Exibir Histórico", command=exibir_historico)
+button_historico.pack(pady=10)
 root.mainloop()
